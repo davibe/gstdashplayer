@@ -1,6 +1,6 @@
 #include <gst/gst.h>
 #include <glib.h>
-#include "gob.h"
+#include "dash-player.h"
 
 struct _DashPlayerPrivate
 {
@@ -41,6 +41,9 @@ dash_player_set_property (GObject *object, guint property_id,
   switch (property_id) {
     case PROP_URI:
       self->priv->uri = g_value_dup_string (value);
+      if (self->priv->pipeline != NULL) {
+        g_object_set (G_OBJECT (self->priv->pipeline), "uri", self->priv->uri, NULL);
+      }
       break;
     case PROP_BANDWIDTH_USAGE:
       self->priv->bandwidth_usage = g_value_get_ulong (value);
@@ -127,7 +130,7 @@ dash_player_init (DashPlayer *self)
   self->priv = priv;
   /* initialize public and private stuff to reasonable defaults */
   self->priv->pipeline = NULL;
-  dash_player_pipeline_build (self);
+  dash_player_pipeline_build (G_OBJECT (self));
 }
 
 
@@ -252,15 +255,13 @@ dash_player_pipeline_build (GObject *object)
 }
 
 void
-dash_player_play (GObject *object)
+dash_player_play (DashPlayer *self)
 {
-  DashPlayer *self = DASH_PLAYER (object);
   gst_element_set_state (self->priv->playbin, GST_STATE_PLAYING);
 }
 
 void
-dash_player_stop (GObject *object)
+dash_player_stop (DashPlayer *self)
 {
-  DashPlayer *self = DASH_PLAYER (object);
   gst_element_set_state (self->priv->playbin, GST_STATE_NULL);
 }

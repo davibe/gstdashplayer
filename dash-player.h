@@ -51,10 +51,10 @@ GType dash_player_get_type (void);
  */
 
 void
-dash_player_play (GObject *object);
+dash_player_play (DashPlayer *self);
 
 void
-dash_player_stop (GObject *object);
+dash_player_stop (DashPlayer *self);
 
 
 #endif /* __DASH_PLAYER_H__ */

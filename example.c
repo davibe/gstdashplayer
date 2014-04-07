@@ -1,6 +1,6 @@
 #include <gst/gst.h>
 #include <glib.h>
-#include "gob.h"
+#include "dash-player.h"
 
 
 gboolean
@@ -28,10 +28,10 @@ main (int   argc,
     "http://www-itec.uni-klu.ac.at/ftp/datasets/mmsys13/redbull_4sec.mpd";
 
   g_object_set (G_OBJECT (player), "uri", uri, NULL);
-  g_object_set (G_OBJECT (player), "bandwidth-usage", 0.1, NULL);
+  g_object_set (G_OBJECT (player), "bandwidth-usage", (gulong) 1.0, NULL);
   g_object_set(G_OBJECT (player), "max-bitrate", (guint) 1024*1024, NULL);
 
-  g_timeout_add (1*1000, G_CALLBACK(after_one_second), player);
+  g_timeout_add (1*1000, after_one_second, player);
 
   /* run the main loop (blocking)*/ 
   GMainLoop *loop;
