@@ -58,9 +58,9 @@ public class DashPlayer {
       player.play();
       try { Thread.sleep(15000); } catch (InterruptedException e) {}
       player.stop();
-      try { Thread.sleep(15000); } catch (InterruptedException e) {}
     }
 
     public void finalize () {
+      DashPlayer.dash_player_unref(this.reference);
     }
 }
