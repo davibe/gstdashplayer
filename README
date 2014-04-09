@@ -4,6 +4,7 @@ GstDashPlayer
 A gstreamer 1.0 based DASH player with java JNI wrappers for simple integration
 in your Java applications.
 
+
 Requrements
 -----------
 
@@ -13,8 +14,17 @@ enabled. I use the cerbero build system to create this environment.
 - gstreamer 1.0
 - java
 
+
 Building
 --------
 
 The file "build.sh" contains command required for building the library and the
-program.
+program. Check its content before using it.
+
+
+Running
+-------
+
+Run it like this
+
+    java -Djava.libraryath=`pwd` DashPlayer
