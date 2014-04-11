@@ -1,5 +1,6 @@
 import java.awt.*;
-import com.sun.jna.Native;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class DashPlayer {
 
@@ -64,6 +65,43 @@ public class DashPlayer {
 
     public static native void dash_player_set_window_handle(long player, long handle);
 
+
+    // instead of using JNA (com.java.jna.Native.getComponentID)
+    // we use these two hacky functions
+
+    protected static Object invokeMethod(Object o, String methodName)
+        throws IllegalAccessException, IllegalArgumentException,
+        InvocationTargetException {
+      Class c = o.getClass();
+
+      for (Method m : c.getMethods()) {
+        if (m.getName().equals(methodName)) {
+          Object ret = m.invoke(o);
+          return ret;
+        }
+      }
+
+      throw new RuntimeException("Could not find method named '" + 
+          methodName+"' on class " + c);
+    }
+
+    protected static long getComponentID(Component component) {
+      java.awt.peer.ComponentPeer peer;
+      long handle;
+
+      try {
+        peer = component.getPeer();
+        handle = invokeMethod(peer, "getWindow");
+        return handle;
+      } catch (IllegalAccessException e) {
+      } catch (IllegalArgumentException e) {
+      } catch (InvocationTargetException e) {
+      }
+
+      return 0;
+    }
+
+
     /* sample usage */
 
     public static void main(String[] argv) {
@@ -85,8 +123,8 @@ public class DashPlayer {
       canvas.setBackground(Color.RED);
       mainFrame.add(canvas);
       mainFrame.setVisible(true);
-      long handle = Native.getComponentID(canvas);
 
+      long handle = getComponentID(canvas);
       player.setWindowHandle(handle);
 
       player.play();
