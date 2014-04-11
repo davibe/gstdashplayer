@@ -1,5 +1,6 @@
 #include <gst/gst.h>
 #include <glib.h>
+#include <gst/video/videooverlay.h>
 #include "dash-player.h"
 
 struct _DashPlayerPrivate
@@ -7,6 +8,7 @@ struct _DashPlayerPrivate
   char *uri;
   gulong bandwidth_usage;
   guint max_bitrate;
+  glong window_handle;
 
   GstPipeline *pipeline;
   GstElement *playbin;
@@ -25,6 +27,7 @@ enum {
   PROP_URI,
   PROP_BANDWIDTH_USAGE,
   PROP_MAX_BITRATE,
+  PROP_WINDOW_HANDLE,
   N_PROPERTIES
 };
 
@@ -51,6 +54,9 @@ dash_player_set_property (GObject *object, guint property_id,
     case PROP_MAX_BITRATE:
       self->priv->max_bitrate = g_value_get_uint (value);
       break;
+    case PROP_WINDOW_HANDLE:
+      self->priv->window_handle = g_value_get_long (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -73,6 +79,9 @@ dash_player_get_property (GObject *object, guint property_id,
       break;
     case PROP_MAX_BITRATE:
       g_value_set_uint (value, self->priv->max_bitrate);
+      break;
+    case PROP_WINDOW_HANDLE:
+      g_value_set_long (value, self->priv->window_handle);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -104,6 +113,12 @@ dash_player_class_properties_init (DashPlayerClass *klass)
       0.0, G_MAXUINT, 0.0,
       G_PARAM_READWRITE);
 
+  obj_properties[PROP_WINDOW_HANDLE] = g_param_spec_long ("window-handle",
+      "XOverlay window handle",
+      "Window handle to pass to XOverlay window interface",
+      0, G_MAXLONG, 0,
+      G_PARAM_READWRITE);
+
   g_object_class_install_properties (gobject_class, N_PROPERTIES,
       obj_properties);
 }
@@ -130,6 +145,7 @@ dash_player_init (DashPlayer *self)
   self->priv = priv;
   /* initialize public and private stuff to reasonable defaults */
   self->priv->pipeline = NULL;
+  self->priv->window_handle = NULL;
   dash_player_pipeline_build (G_OBJECT (self));
 }
 
@@ -219,6 +235,25 @@ on_element_added (GstBin *bin, GstElement *element, gpointer emitter) {
 }
 
 
+static GstBusSyncReply
+bus_sync_handler (GstBus * bus, GstMessage * message, gpointer user_data)
+{
+  GstVideoOverlay *overlay;
+  DashPlayer *self = DASH_PLAYER (user_data);
+
+  // ignore anything but 'prepare-window-handle' element messages
+  if (!gst_is_video_overlay_prepare_window_handle_message (message))
+    return GST_BUS_PASS;
+
+  // GST_MESSAGE_SRC (message) will be the video sink element
+  overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
+  gst_video_overlay_set_window_handle (overlay, self->priv->window_handle);
+
+  gst_message_unref (message);
+  return GST_BUS_DROP;
+}
+
+
 void
 dash_player_pipeline_build (GObject *object)
 {
@@ -231,7 +266,7 @@ dash_player_pipeline_build (GObject *object)
   DashPlayer *self = DASH_PLAYER (object);
 
   /* set up */
-  videosink = gst_element_factory_make ("osxvideosink", "videosink");
+  videosink = gst_element_factory_make ("ximagesink", "videosink");
   audiosink = gst_element_factory_make ("fakesink", "audiosink");
   playbin = gst_element_factory_make ("playbin", "pipeline");
   g_object_set (G_OBJECT (playbin), "uri", self->priv->uri, NULL);
@@ -240,6 +275,8 @@ dash_player_pipeline_build (GObject *object)
 
   pipeline = GST_PIPELINE(playbin);
   bus = gst_pipeline_get_bus (pipeline);
+  gst_bus_set_sync_handler (bus, (GstBusSyncHandler) bus_sync_handler, self,
+      NULL);
   //gst_bus_add_watch (bus, my_bus_callback, loop);
   g_signal_connect(playbin, "element-added",
       G_CALLBACK(on_element_added ), playbin);

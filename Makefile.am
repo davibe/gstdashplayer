@@ -1,8 +1,10 @@
 lib_LTLIBRARIES = libdashplayer.la
-libdashplayer_la_CFLAGS = $(GST_CFLAGS) $(GLIB_CFLAGS) -ggdb -O0
+libdashplayer_la_CFLAGS = $(GST_CFLAGS) $(GLIB_CFLAGS) $(GSTVIDEO_CFLAGS) -ggdb -O0
 libdashplayer_la_CFLAGS += -I/System/Library/Frameworks/JavaVM.framework/Headers/
+libdashplayer_la_CFLAGS += -I/usr/lib/jvm/java-6-openjdk-amd64/include
+#libdashplayer_la_CFLAGS += -I/usr/lib/jvm/java-6-oracle/include/linux
 libdashplayer_la_SOURCES = DashPlayer.c #dash-player.c
-libdashplayer_la_LDFLAGS = $(GST_LIBS) $(GLIB_LIBS)
+libdashplayer_la_LDFLAGS = $(GST_LIBS) $(GLIB_LIBS) $(GSTVIDEO_LIBS)
 
 
 #bin_PROGRAMS = example		
