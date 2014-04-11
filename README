@@ -13,6 +13,7 @@ enabled. I use the cerbero build system to create this environment.
 
 - gstreamer 1.0
 - java
+- libjna-java
 
 
 Building
